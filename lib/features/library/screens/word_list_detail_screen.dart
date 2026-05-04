@@ -31,10 +31,6 @@ class _WordListDetailScreenState extends State<WordListDetailScreen> {
 
   String? get _userId => Supabase.instance.client.auth.currentUser?.id;
 
-
-
-
-
   Future<void> _load() async {
     final userId = _userId;
     if (userId == null) return;
@@ -134,6 +130,16 @@ class _ListHeader extends StatelessWidget {
         ),
         if (wordList.isJoined && wordList.totalWords > 0) ...[
           const SizedBox(height: 10),
+          // Slice 3：加「已學過 N/M 字」標籤
+          Text(
+            '已學過 ${(wordList.progressPercent * wordList.totalWords).round()}/${wordList.totalWords} 字',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: cs.onSurface.withValues(alpha: 0.7),
+            ),
+          ),
+          const SizedBox(height: 6),
           Row(
             children: [
               Expanded(

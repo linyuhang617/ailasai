@@ -84,8 +84,9 @@ class WordListCard extends StatelessWidget {
                   ),
                   if (wordList.isJoined && wordList.totalWords > 0) ...[
                     const Spacer(),
+                    // Slice 3：改「N% 已複習」為「已學過 N/M 字」
                     Text(
-                      '${(wordList.progressPercent * 100).round()}% 已複習',
+                      '已學過 ${(wordList.progressPercent * wordList.totalWords).round()}/${wordList.totalWords} 字',
                       style: const TextStyle(
                           color: Colors.black54, fontSize: 13),
                     ),
