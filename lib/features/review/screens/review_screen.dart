@@ -23,6 +23,7 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
   late final ReviewSession _session;
   bool _isFlipped = false;
   bool _loading = true;
+  bool _isProcessing = false;  // Slice 2 新增
 
   @override
   void initState() {
@@ -45,6 +46,9 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
   }
 
   Future<void> _onRate(ReviewRating rating) async {
+    if (_isProcessing) return;  // Slice 2 新增：防連點
+    setState(() => _isProcessing = true);  // Slice 2 新增
+
     await _session.rate(rating);
     if (!mounted) return;
     if (_session.isComplete) {
@@ -61,7 +65,10 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
       );
       return;
     }
-    setState(() => _isFlipped = false);
+    setState(() {
+      _isFlipped = false;
+      _isProcessing = false;  // Slice 2 新增：下一張卡就緒才解鎖
+    });
   }
 
   @override
@@ -118,6 +125,7 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                       child: RatingButtons(
                         intervals: _session.previewIntervals,
                         onRate: _onRate,
+                        enabled: !_isProcessing,  // Slice 2 新增
                       ),
                     )
                   : const Padding(

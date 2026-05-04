@@ -17,17 +17,21 @@ class PracticeScreen extends StatefulWidget {
 class _PracticeScreenState extends State<PracticeScreen> {
   late final PracticeSession _session;
   bool _isFlipped = false;
+  bool _isProcessing = false;  // Slice 2 新增
 
   @override
   void initState() {
     super.initState();
     _session = PracticeSession(words: widget.words);
-    _session.init(); // 同步，不需要 await
+    _session.init();
   }
 
   void _onFlipped() => setState(() => _isFlipped = true);
 
   void _onRate(ReviewRating rating) {
+    if (_isProcessing) return;  // Slice 2 新增：防連點
+    setState(() => _isProcessing = true);  // Slice 2 新增
+
     _session.rate(rating);
     if (!mounted) return;
     if (_session.isComplete) {
@@ -37,13 +41,16 @@ class _PracticeScreenState extends State<PracticeScreen> {
             totalReviewed: _session.totalReviewed,
             correctReviewed: _session.correctReviewed,
             isPractice: true,
-            onPracticeAgain: null, // 加練完成後不再出現「再練一次」
+            onPracticeAgain: null,
           ),
         ),
       );
       return;
     }
-    setState(() => _isFlipped = false);
+    setState(() {
+      _isFlipped = false;
+      _isProcessing = false;  // Slice 2 新增：下一張卡就緒才解鎖
+    });
   }
 
   @override
@@ -73,7 +80,6 @@ class _PracticeScreenState extends State<PracticeScreen> {
                           fontWeight: FontWeight.w700,
                           color: Color(0xFF3A3358))),
                   const SizedBox(width: 8),
-                  // 加練標記
                   Container(
                     padding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -113,6 +119,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
                       child: RatingButtons(
                         intervals: _session.previewIntervals,
                         onRate: _onRate,
+                        enabled: !_isProcessing,  // Slice 2 新增
                       ),
                     )
                   : const Padding(
