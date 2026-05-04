@@ -35,7 +35,7 @@ class SyncService {
   }
 
   /// 舊 API 保留(LoginScreen 還在呼叫),導向新 sync()
-  /// Slice 17+ 可清掉
+  /// Slice 18 清掉
   Future<void> syncOnLogin(String userId) => sync(userId);
 
   /// 複習完一張卡後即時推送到 Supabase
@@ -43,18 +43,19 @@ class SyncService {
   /// 失敗靜默, 不影響本機寫入流程
   /// 成功後寫 lastSyncedAt = lastReviewedAt(避免下次 sync 重推)
   Future<void> pushSingleCardState(CardState state, String userId) async {
-    try {
-      await _db.from('card_states').upsert(
-            _rowFor(state, userId),
-            onConflict: 'user_id,word_id',
-          );
-      // 推送成功才標記 synced
-      final storage = LocalStorageService();
-      await storage.saveCardState(state, markSynced: true);
-    } catch (e) {
-      // ignore: avoid_print
-      print('[SyncService] pushSingleCardState failed: $e');
-    }
+    await _lock.protect(() async {
+      try {
+        await _db.from('card_states').upsert(
+              _rowFor(state, userId),
+              onConflict: 'user_id,word_id',
+            );
+        final storage = LocalStorageService();
+        await storage.saveCardState(state, markSynced: true);
+      } catch (e) {
+        // ignore: avoid_print
+        print('[SyncService] pushSingleCardState failed: $e');
+      }
+    });
   }
 
   /// 共用 payload。注意 updated_at 不再傳, server trigger 自動戳
@@ -83,8 +84,6 @@ class SyncService {
           onConflict: 'user_id,word_id',
         );
 
-    // 推送成功才標記 synced。markSynced 寫 lastSyncedAt = lastReviewedAt
-    // 順便補 userId(舊 row 升級時可能 null)
     for (final s in dirty) {
       if (s.userId != userId) s.userId = userId;
       await storage.saveCardState(s, markSynced: true);
@@ -128,12 +127,9 @@ class SyncService {
       s.lastReviewedAt = DateTime.parse(row['last_reviewed_at']).toUtc();
       s.totalReviews = row['total_reviews'] as int;
       s.correctReviews = row['correct_reviews'] as int;
-      // pull 下來的 row 視同 synced(來源就是 server)
       await storage.saveCardState(s, markSynced: true);
     }
 
-    // 更新 cursor 為這批資料最大的 updated_at
-    // 下次 pull 從這之後開始,避免重抓
     await prefs.setString(_cursorKey(userId), maxUpdated.toIso8601String());
   }
 }
