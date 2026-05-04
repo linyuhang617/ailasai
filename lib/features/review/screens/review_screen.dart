@@ -6,6 +6,8 @@ import '../../../core/services/sm2_service.dart';
 import '../review_session.dart';
 import '../widgets/word_card.dart';
 import '../widgets/rating_buttons.dart';
+import '../../home/widgets/assignments_section.dart' show assignmentsProvider;
+import '../../team/screens/team_screen.dart' show myTeamsProvider;
 import 'review_complete_screen.dart';
 import 'practice_screen.dart';
 
@@ -46,6 +48,8 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
     await _session.rate(rating);
     if (!mounted) return;
     if (_session.isComplete) {
+      ref.invalidate(assignmentsProvider);
+      ref.invalidate(myTeamsProvider);
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
           builder: (_) => ReviewCompleteScreen(

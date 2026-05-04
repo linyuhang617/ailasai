@@ -49,12 +49,30 @@ class LocalStorageService {
         .findFirst();
   }
 
-  Future<void> saveCardState(CardState state) async {
+  /// Slice 16: 取得需要 push 到 server 的「髒」狀態
+  /// dirty 定義: lastSyncedAt == null 或 lastReviewedAt > lastSyncedAt
+  /// 一次 fetch 全部再過濾, Isar 沒有「null 或 X > Y」的 query DSL,
+  /// CardState 數量不大(<10k 等級), in-memory filter 可接受
+  Future<List<CardState>> getDirtyStates() async {
+    final all = await _db.cardStates.where().findAll();
+    return all.where((s) {
+      final synced = s.lastSyncedAt;
+      if (synced == null) return true;
+      return s.lastReviewedAt.isAfter(synced);
+    }).toList();
+  }
+
+  /// Slice 16: 寫入 CardState
+  /// markSynced=true 時順手把 lastSyncedAt 設為 lastReviewedAt
+  /// (給 sync 流程用,本機 review 寫入時走預設 false)
+  Future<void> saveCardState(CardState state, {bool markSynced = false}) async {
+    if (markSynced) {
+      state.lastSyncedAt = state.lastReviewedAt;
+    }
     await _db.writeTxn(() async {
       await _db.cardStates.put(state);
     });
   }
-
 
   Future<void> clearAllStates() async {
     await _db.writeTxn(() async {

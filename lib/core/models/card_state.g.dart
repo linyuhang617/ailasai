@@ -47,28 +47,33 @@ const CardStateSchema = CollectionSchema(
       name: r'lastReviewedAt',
       type: IsarType.dateTime,
     ),
-    r'repetitions': PropertySchema(
+    r'lastSyncedAt': PropertySchema(
       id: 6,
+      name: r'lastSyncedAt',
+      type: IsarType.dateTime,
+    ),
+    r'repetitions': PropertySchema(
+      id: 7,
       name: r'repetitions',
       type: IsarType.long,
     ),
     r'stability': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'stability',
       type: IsarType.double,
     ),
     r'totalReviews': PropertySchema(
-      id: 8,
+      id: 9,
       name: r'totalReviews',
       type: IsarType.long,
     ),
     r'userId': PropertySchema(
-      id: 9,
+      id: 10,
       name: r'userId',
       type: IsarType.string,
     ),
     r'wordId': PropertySchema(
-      id: 10,
+      id: 11,
       name: r'wordId',
       type: IsarType.string,
     )
@@ -129,11 +134,12 @@ void _cardStateSerialize(
   writer.writeDouble(offsets[3], object.easeFactor);
   writer.writeLong(offsets[4], object.intervalDays);
   writer.writeDateTime(offsets[5], object.lastReviewedAt);
-  writer.writeLong(offsets[6], object.repetitions);
-  writer.writeDouble(offsets[7], object.stability);
-  writer.writeLong(offsets[8], object.totalReviews);
-  writer.writeString(offsets[9], object.userId);
-  writer.writeString(offsets[10], object.wordId);
+  writer.writeDateTime(offsets[6], object.lastSyncedAt);
+  writer.writeLong(offsets[7], object.repetitions);
+  writer.writeDouble(offsets[8], object.stability);
+  writer.writeLong(offsets[9], object.totalReviews);
+  writer.writeString(offsets[10], object.userId);
+  writer.writeString(offsets[11], object.wordId);
 }
 
 CardState _cardStateDeserialize(
@@ -150,11 +156,12 @@ CardState _cardStateDeserialize(
   object.intervalDays = reader.readLong(offsets[4]);
   object.isarId = id;
   object.lastReviewedAt = reader.readDateTime(offsets[5]);
-  object.repetitions = reader.readLong(offsets[6]);
-  object.stability = reader.readDouble(offsets[7]);
-  object.totalReviews = reader.readLong(offsets[8]);
-  object.userId = reader.readStringOrNull(offsets[9]);
-  object.wordId = reader.readString(offsets[10]);
+  object.lastSyncedAt = reader.readDateTimeOrNull(offsets[6]);
+  object.repetitions = reader.readLong(offsets[7]);
+  object.stability = reader.readDouble(offsets[8]);
+  object.totalReviews = reader.readLong(offsets[9]);
+  object.userId = reader.readStringOrNull(offsets[10]);
+  object.wordId = reader.readString(offsets[11]);
   return object;
 }
 
@@ -178,14 +185,16 @@ P _cardStateDeserializeProp<P>(
     case 5:
       return (reader.readDateTime(offset)) as P;
     case 6:
-      return (reader.readLong(offset)) as P;
+      return (reader.readDateTimeOrNull(offset)) as P;
     case 7:
-      return (reader.readDouble(offset)) as P;
-    case 8:
       return (reader.readLong(offset)) as P;
+    case 8:
+      return (reader.readDouble(offset)) as P;
     case 9:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readLong(offset)) as P;
     case 10:
+      return (reader.readStringOrNull(offset)) as P;
+    case 11:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -786,6 +795,79 @@ extension CardStateQueryFilter
     });
   }
 
+  QueryBuilder<CardState, CardState, QAfterFilterCondition>
+      lastSyncedAtIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'lastSyncedAt',
+      ));
+    });
+  }
+
+  QueryBuilder<CardState, CardState, QAfterFilterCondition>
+      lastSyncedAtIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'lastSyncedAt',
+      ));
+    });
+  }
+
+  QueryBuilder<CardState, CardState, QAfterFilterCondition> lastSyncedAtEqualTo(
+      DateTime? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'lastSyncedAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<CardState, CardState, QAfterFilterCondition>
+      lastSyncedAtGreaterThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'lastSyncedAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<CardState, CardState, QAfterFilterCondition>
+      lastSyncedAtLessThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'lastSyncedAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<CardState, CardState, QAfterFilterCondition> lastSyncedAtBetween(
+    DateTime? lower,
+    DateTime? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'lastSyncedAt',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
   QueryBuilder<CardState, CardState, QAfterFilterCondition> repetitionsEqualTo(
       int value) {
     return QueryBuilder.apply(this, (query) {
@@ -1314,6 +1396,18 @@ extension CardStateQuerySortBy on QueryBuilder<CardState, CardState, QSortBy> {
     });
   }
 
+  QueryBuilder<CardState, CardState, QAfterSortBy> sortByLastSyncedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastSyncedAt', Sort.asc);
+    });
+  }
+
+  QueryBuilder<CardState, CardState, QAfterSortBy> sortByLastSyncedAtDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastSyncedAt', Sort.desc);
+    });
+  }
+
   QueryBuilder<CardState, CardState, QAfterSortBy> sortByRepetitions() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'repetitions', Sort.asc);
@@ -1461,6 +1555,18 @@ extension CardStateQuerySortThenBy
     });
   }
 
+  QueryBuilder<CardState, CardState, QAfterSortBy> thenByLastSyncedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastSyncedAt', Sort.asc);
+    });
+  }
+
+  QueryBuilder<CardState, CardState, QAfterSortBy> thenByLastSyncedAtDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastSyncedAt', Sort.desc);
+    });
+  }
+
   QueryBuilder<CardState, CardState, QAfterSortBy> thenByRepetitions() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'repetitions', Sort.asc);
@@ -1560,6 +1666,12 @@ extension CardStateQueryWhereDistinct
     });
   }
 
+  QueryBuilder<CardState, CardState, QDistinct> distinctByLastSyncedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'lastSyncedAt');
+    });
+  }
+
   QueryBuilder<CardState, CardState, QDistinct> distinctByRepetitions() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'repetitions');
@@ -1634,6 +1746,12 @@ extension CardStateQueryProperty
   QueryBuilder<CardState, DateTime, QQueryOperations> lastReviewedAtProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'lastReviewedAt');
+    });
+  }
+
+  QueryBuilder<CardState, DateTime?, QQueryOperations> lastSyncedAtProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'lastSyncedAt');
     });
   }
 

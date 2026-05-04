@@ -13,6 +13,9 @@ import '../../features/student/screens/join_classroom_screen.dart';
 import '../../features/student/screens/qr_scanner_screen.dart';
 import '../../features/teacher/screens/classroom_screen.dart';
 import '../../features/teacher/screens/student_progress_screen.dart';
+import '../../features/team/screens/create_join_team_screen.dart';
+import '../../features/team/screens/team_detail_screen.dart';
+import '../../features/team/screens/team_screen.dart';
 import '../../features/teacher/screens/teacher_home_screen.dart';
 import '../services/notification_service.dart';
 import '../services/role_provider.dart';
@@ -73,6 +76,27 @@ GoRouter buildAppRouter() {
             ),
           ),
         ],
+      ),
+
+      // 隊伍：root navigator(沒有底部導航,Slice 15)
+      GoRoute(
+        path: '/team',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (_, _) => const TeamScreen(),
+        routes: [
+          GoRoute(
+            path: 'new',
+            parentNavigatorKey: _rootNavigatorKey,
+            builder: (_, _) => const CreateJoinTeamScreen(),
+          ),
+        ],
+      ),
+      GoRoute(
+        path: '/team/:id',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (_, state) => TeamDetailScreen(
+          teamId: state.pathParameters['id']!,
+        ),
       ),
 
       // 主要 ShellRoute:底部導航 = 首頁(依 role 分流) / 字庫 / 設定

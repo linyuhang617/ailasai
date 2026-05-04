@@ -10,6 +10,7 @@ import '../../core/services/local_storage_service.dart';
 import '../../core/services/sm2_service.dart';
 import '../../core/services/sync_service.dart';
 import '../../core/services/assignment_service.dart';
+import '../../core/services/team_service.dart';
 
 class _CardItem {
   final CardState state;
@@ -23,6 +24,7 @@ class ReviewSession {
   final FsrsService _fsrs = FsrsService();
   final SyncService _sync = SyncService();
   final AssignmentService _assignSvc = AssignmentService();
+  final TeamService _teamSvc = TeamService();
   final SrsAlgorithm algorithm;
 
   final List<_CardItem> _dueQueue = [];
@@ -143,6 +145,12 @@ class ReviewSession {
     // Slice 14: 記錄作業進度（Server 端決定此單字屬於哪些作業）
     // 不 await，靜默失敗，不拖慢複習流程
     unawaited(_assignSvc.recordProgress(item.state.wordId));
+
+    // Slice 15: 完成第 10 張卡時觸發隊伍打卡
+    // 同 session 後續評分不重複呼叫 (DB UNIQUE 也會擋,但少打網路)
+    if (totalReviewed == 10) {
+      unawaited(_teamSvc.checkIn());
+    }
 
     if (rating == ReviewRating.again) {
       _againQueue.add(item);

@@ -3,12 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/services/notification_service.dart';
+import '../../../core/services/sync_service.dart';
 import '../../../core/services/stats_service.dart';
 import '../../review/screens/review_screen.dart';
 import '../../review/screens/practice_screen.dart';
 import '../widgets/active_lists_section.dart';
 import '../widgets/stats_card.dart';
 import '../widgets/my_classrooms_section.dart';
+import '../widgets/my_teams_section.dart';
 import '../widgets/assignments_section.dart';
 import '../widgets/streak_banner.dart';
 
@@ -59,6 +61,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             onPressed: () => context.push('/join-classroom'),
           ),
           IconButton(
+            icon: const Icon(Icons.groups_outlined),
+            tooltip: '我的隊伍',
+            onPressed: () => context.push('/team'),
+          ),
+          IconButton(
             icon: const Icon(Icons.settings_outlined),
             onPressed: () => context.go('/settings'),
           ),
@@ -80,7 +87,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
         ),
         data: (stats) => RefreshIndicator(
-          onRefresh: () async => ref.refresh(_homeStatsProvider),
+          onRefresh: () async {
+            // Slice 16: pull-to-refresh 順手 sync card_states
+            // 失敗靜默(SyncService 內部已 try/catch),不擋 UI 刷新
+            final userId = Supabase.instance.client.auth.currentUser?.id;
+            if (userId != null) await SyncService().sync(userId);
+            ref.invalidate(_homeStatsProvider);
+          },
           child: stats.hasJoinedLists
               ? _Dashboard(stats: stats)
               : _EmptyStateWithClassrooms(),
@@ -110,6 +123,7 @@ class _Dashboard extends StatelessWidget {
         ActiveListsSection(lists: stats.joinedLists),
         const AssignmentsSection(),
         const MyClassroomsSection(),
+        const MyTeamsSection(),
         const SizedBox(height: 24),
         _MainButton(stats: stats),
         const SizedBox(height: 8),
@@ -230,6 +244,7 @@ class _EmptyStateWithClassrooms extends StatelessWidget {
         ),
         const AssignmentsSection(),
         const MyClassroomsSection(),
+        const MyTeamsSection(),
       ],
     );
   }
